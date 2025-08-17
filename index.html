@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Routines Listening Quiz</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7b764; /* A cheerful orange */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .progress-container {
+            border-radius: 9999px;
+            height: 0.75rem;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+            border-radius: inherit;
+        }
+        .question-card {
+            background-color: #e0f2fe;
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+        .radio-option {
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .radio-option:hover {
+            border-color: #3b82f6;
+        }
+        input[type="radio"]:checked + .radio-option {
+            background-color: #bfdbfe;
+            border-color: #3b82f6;
+        }
+        .transcript-container {
+            background-color: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            font-style: italic;
+            color: #4b5563;
+        }
+        .hidden {
+            display: none;
+        }
+        .transcript-toggle {
+            cursor: pointer;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-top: 1rem;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-amber-500 min-h-screen flex items-center justify-center p-8">
+
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center mb-2 text-gray-800">Daily Routines Listening Quiz</h1>
+        <p class="text-center mb-6 text-gray-600">Listen to people talking about their daily activities and answer the questions</p>
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center text-sm mb-2 text-gray-600">
+                <span>Progress</span>
+                <span id="progress-text">0/5</span>
+            </div>
+            <div class="bg-gray-200 progress-container">
+                <div id="progress-bar" class="progress-bar bg-blue-500 w-0"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container">
+            <!-- Question will be injected here by JavaScript -->
+        </div>
+
+        <!-- Hidden Audio Element -->
+        <audio id="audio-player" preload="auto">
+            <!-- Source will be set by JavaScript -->
+        </audio>
+
+    </div>
+
+    <script>
+        // Data for the quiz questions
+        // NOTE: The audioSrc links are placeholders. You will need to replace them with your actual audio file URLs.
+        const quizData = [
+            {
+                question: "What does Alex do right after he gets up in the morning?",
+                audioSrc: "https://www.dropbox.com/scl/fi/0ot25bszpo5gbbd0efiwd/i-am-alex-Made-with-Clipchamp.mp3?rlkey=dqsyu6mfeo70gmde0ow2sltvi&dl=1",
+                transcript: "I'm Alex, and my day starts at 7 AM. The first thing I do is take a shower to wake up. Then I get dressed and go to the kitchen to have a quick breakfast.",
+                options: [
+                    { text: "He takes a shower.", isCorrect: true },
+                    { text: "He has breakfast.", isCorrect: false },
+                    { text: "He leaves the house.", isCorrect: false },
+                    { text: "He reads a book.", isCorrect: false }
+                ]
+            },
+            {
+                question: "What does Maya have for breakfast?",
+                audioSrc: "https://www.dropbox.com/scl/fi/f2u48io52zzqdj16fket4/My-name-is-Maya-Made-with-Clipchamp_1755439719562.mp3?rlkey=x2en5qlu42v3ber9wrjifrbyu&dl=1",
+                transcript: "My name is Maya. I wake up at 6:00 AM to go for a jog. When I get back, I make myself a healthy smoothie with fruits and vegetables. Then I start working from home.",
+                options: [
+                    { text: "Toast and coffee.", isCorrect: false },
+                    { text: "A smoothie.", isCorrect: true },
+                    { text: "Cereal.", isCorrect: false },
+                    { text: "Nothing.", isCorrect: false }
+                ]
+            },
+            {
+                question: "Where does Maya work?",
+                audioSrc: "https://www.dropbox.com/scl/fi/9tztdarv4u1gphrhtw9hp/Transcript-3-Made-with-Clipchamp_1755440460891.mp3?rlkey=21gkut5sie1xi3qj5uugceycm&st=t1utgl9n&dl=1",
+                transcript: "After my shower, I have toast and coffee. At 8:15 AM, I leave for my job. I work at a small bookstore downtown. It's a quiet place, and I enjoy being around books.",
+                options: [
+                    { text: "At a coffee shop.", isCorrect: false },
+                    { text: "From home.", isCorrect: false },
+                    { text: "At a bookstore.", isCorrect: true },
+                    { text: "At an office.", isCorrect: false }
+                ]
+            },
+            {
+                question: "What time does Maya usually go to bed?",
+                audioSrc: "https://www.dropbox.com/scl/fi/nagkwzzk9y1wjz4m9r31b/Transcript-5-Made-with-Clipchamp_1755440622013.mp3?rlkey=9w7w5ygfnitcalv4bswki8yjk&dl=1",
+                transcript: "When I finish work, I usually read a book or watch a movie. I try to be in bed by 11:00 PM to get enough sleep for the next day.",
+                options: [
+                    { text: "10:00 PM.", isCorrect: false },
+                    { text: "11:00 PM.", isCorrect: true },
+                    { text: "8:15 AM.", isCorrect: false },
+                    { text: "5:00 PM.", isCorrect: false }
+                ]
+            },
+            {
+                question: "How does Alex spend his evenings?",
+                audioSrc: "https://www.dropbox.com/scl/fi/tewaa7gibkndnua9sc2qo/Transcript-4-Made-with-Clipchamp_1755441342527.mpkey=2be7kpz3j1zuh6ukngvgdsmb4&st=mukqjoin&dl=1",
+                transcript: "My work day finishes in the late afternoon. In the evenings, I like to relax. I often play my guitar for an hour before I have dinner with my family.",
+                options: [
+                    { text: "He goes for a jog.", isCorrect: false },
+                    { text: "He works late.", isCorrect: false },
+                    { text: "He reads a book.", isCorrect: false },
+                    { text: "He plays a musical instrument.", isCorrect: true }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let hasAnswered = false;
+
+        const quizContainer = document.getElementById('quiz-container');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        const audioPlayer = document.getElementById('audio-player');
+        let playAudioBtn;
+
+        // Function to render the current question
+        function renderQuestion() {
+            if (currentQuestionIndex >= quizData.length) {
+                // Quiz is finished
+                renderResults();
+                return;
+            }
+
+            hasAnswered = false;
+            const currentQuestion = quizData[currentQuestionIndex];
+            const progress = currentQuestionIndex;
+            progressText.textContent = `${progress}/${quizData.length}`;
+            progressBar.style.width = `${(progress / quizData.length) * 100}%`;
+
+            let optionsHtml = '';
+            currentQuestion.options.forEach((option, index) => {
+                optionsHtml += `
+                    <label for="option-${index}" class="block">
+                        <input type="radio" id="option-${index}" name="quiz-option" value="${index}" class="hidden peer">
+                        <div class="radio-option mt-4 peer-checked:bg-blue-200 peer-checked:border-blue-500 flex items-center">
+                            <span class="w-4 h-4 rounded-full border border-gray-400 mr-4 flex-shrink-0"></span>
+                            <span>${option.text}</span>
+                        </div>
+                    </label>
+                `;
+            });
+
+            quizContainer.innerHTML = `
+                <div class="question-card">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Question ${currentQuestionIndex + 1}</h2>
+
+                    <!-- Audio Section -->
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-full shadow-sm mb-6">
+                        <svg class="h-6 w-6 text-blue-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l7 4.5-7 4.5z"/>
+                        </svg>
+                        <span class="text-gray-700">Listen to the audio to answer the question below.</span>
+                        <button id="play-audio-btn" class="ml-auto px-6 py-2 text-white bg-blue-500 rounded-full font-bold shadow hover:bg-blue-600 transition-colors" disabled>
+                            Loading...
+                        </button>
+                    </div>
+
+                    <p class="text-lg font-medium mb-4 text-gray-700">${currentQuestion.question}</p>
+                    
+                    <!-- Options -->
+                    <div class="flex flex-col">
+                        ${optionsHtml}
+                    </div>
+
+                    <!-- Transcript -->
+                    <div id="transcript-box" class="transcript-container hidden">
+                        <p id="transcript-text"></p>
+                    </div>
+                    <div class="flex justify-end mt-6 space-x-4">
+                        <button id="show-transcript-btn" class="px-6 py-3 bg-yellow-400 text-gray-800 rounded-full font-bold shadow-md hover:bg-yellow-500 transition-colors">
+                            Show Transcript
+                        </button>
+                        <button id="next-question-btn" class="px-6 py-3 bg-orange-500 text-white rounded-full font-bold shadow-md hover:bg-orange-600 transition-colors">
+                            Next Question
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Set up event listeners for the new elements
+            playAudioBtn = document.getElementById('play-audio-btn');
+            const showTranscriptBtn = document.getElementById('show-transcript-btn');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const transcriptBox = document.getElementById('transcript-box');
+            const transcriptText = document.getElementById('transcript-text');
+            
+            // Set audio source
+            audioPlayer.src = currentQuestion.audioSrc;
+            
+            // Add a listener to enable the button when audio is ready to play
+            audioPlayer.addEventListener('canplaythrough', () => {
+                playAudioBtn.textContent = 'Play Audio';
+                playAudioBtn.disabled = false;
+            });
+
+            playAudioBtn.addEventListener('click', () => {
+                // Use try/catch to handle potential playback errors
+                try {
+                    audioPlayer.play();
+                } catch (error) {
+                    console.error("Audio playback failed:", error);
+                    // Provide user feedback without an alert
+                    const messageBox = document.createElement('div');
+                    messageBox.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-lg transition-opacity duration-300';
+                    messageBox.innerHTML = '<p>Error playing audio. Please try again or check your internet connection.</p>';
+                    document.body.appendChild(messageBox);
+                    setTimeout(() => messageBox.remove(), 5000);
+                }
+            });
+
+            showTranscriptBtn.addEventListener('click', () => {
+                transcriptText.textContent = currentQuestion.transcript;
+                transcriptBox.classList.remove('hidden');
+                showTranscriptBtn.classList.add('hidden');
+            });
+            
+            nextQuestionBtn.addEventListener('click', () => {
+                const selectedOption = document.querySelector('input[name="quiz-option"]:checked');
+                if (!selectedOption) {
+                    // Replaced alert with a custom message to follow best practices
+                    const messageBox = document.createElement('div');
+                    messageBox.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-lg transition-opacity duration-300';
+                    messageBox.innerHTML = '<p>Please select an answer before proceeding.</p>';
+                    document.body.appendChild(messageBox);
+                    setTimeout(() => messageBox.remove(), 3000);
+                    return;
+                }
+
+                if (currentQuestion.options[selectedOption.value].isCorrect) {
+                    score++;
+                }
+
+                currentQuestionIndex++;
+                renderQuestion();
+            });
+
+            // Add visual feedback to options
+            document.querySelectorAll('input[name="quiz-option"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    if (hasAnswered) return;
+                    hasAnswered = true;
+                    document.querySelectorAll('.radio-option').forEach(option => {
+                        option.classList.remove('bg-red-200', 'bg-green-200', 'border-red-500', 'border-green-500');
+                    });
+                    
+                    const selected = currentQuestion.options[input.value];
+                    const selectedLabel = input.nextElementSibling;
+                    if (selected.isCorrect) {
+                        selectedLabel.classList.add('bg-green-200', 'border-green-500');
+                    } else {
+                        selectedLabel.classList.add('bg-red-200', 'border-red-500');
+                        const correctIndex = currentQuestion.options.findIndex(opt => opt.isCorrect);
+                        const correctLabel = document.getElementById(`option-${correctIndex}`).nextElementSibling;
+                        correctLabel.classList.add('bg-green-200', 'border-green-500');
+                    }
+                });
+            });
+        }
+        
+        // Function to render the final results
+        function renderResults() {
+            progressBar.style.width = '100%';
+            progressText.textContent = `${quizData.length}/${quizData.length}`;
+            
+            quizContainer.innerHTML = `
+                <div class="text-center p-8 bg-white rounded-xl shadow-md">
+                    <h2 class="text-3xl font-bold mb-4">Quiz Complete!</h2>
+                    <p class="text-xl">You scored ${score} out of ${quizData.length} questions.</p>
+                    <p class="text-sm text-gray-500 mt-2">To try again, please reload the page.</p>
+                </div>
+            `;
+        }
+
+        // Initialize the quiz on page load
+        window.onload = renderQuestion;
+    </script>
+
+</body>
+</html>
